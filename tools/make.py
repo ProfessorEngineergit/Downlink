@@ -2,7 +2,8 @@ import math, sys
 sys.path.insert(0, sys.path[0])
 from gen import Icon, land_paths, ortho, bg_only
 
-LAND = "/Users/bahriannovotny/Desktop/DEV./Downlink/app/src/main/assets/land.json"
+# Natural-Earth-Küsten, liegen in Downlink/app/src/main/assets/land.json
+LAND = sys.argv[1] if len(sys.argv) > 1 else "land.json"
 
 # ============ Yearflight: Erdkugel mit echten Kontinenten und Pins ============
 def yearflight():
