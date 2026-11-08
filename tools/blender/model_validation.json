@@ -1,0 +1,145 @@
+{
+  "models": {
+    "meteor": {
+      "objects": 212,
+      "faces": 47602,
+      "dimensions_metres": [
+        10.65,
+        4.846,
+        1.825
+      ],
+      "license": "CC0-1.0"
+    },
+    "iss": {
+      "objects": 73,
+      "faces": 413010,
+      "dimensions_metres": [
+        76.035,
+        109.0,
+        28.913
+      ],
+      "license": "NASA public domain; procedural material enhancements CC0"
+    },
+    "tiangong": {
+      "objects": 1298,
+      "faces": 66278,
+      "dimensions_metres": [
+        34.324,
+        55.6,
+        5.845
+      ],
+      "license": "CC0-1.0"
+    },
+    "metop": {
+      "objects": 189,
+      "faces": 16986,
+      "dimensions_metres": [
+        15.861,
+        6.295,
+        2.416
+      ],
+      "license": "CC0-1.0"
+    },
+    "hubble": {
+      "objects": 748,
+      "faces": 609463,
+      "dimensions_metres": [
+        13.2,
+        11.673,
+        4.798
+      ],
+      "license": "NASA public domain; procedural material enhancements CC0"
+    },
+    "npp": {
+      "objects": 6,
+      "faces": 4024,
+      "dimensions_metres": [
+        3.011,
+        10.5,
+        4.903
+      ],
+      "license": "NASA public domain; procedural material enhancements CC0"
+    },
+    "jpss": {
+      "objects": 87,
+      "faces": 16948,
+      "dimensions_metres": [
+        9.567,
+        4.155,
+        1.999
+      ],
+      "license": "CC0-1.0"
+    },
+    "aqua": {
+      "objects": 28,
+      "faces": 115142,
+      "dimensions_metres": [
+        4.772,
+        16.7,
+        8.831
+      ],
+      "license": "NASA public domain; procedural material enhancements CC0"
+    },
+    "terra": {
+      "objects": 22,
+      "faces": 117119,
+      "dimensions_metres": [
+        7.581,
+        14.5,
+        5.719
+      ],
+      "license": "NASA public domain; procedural material enhancements CC0"
+    },
+    "aura": {
+      "objects": 1,
+      "faces": 6135,
+      "dimensions_metres": [
+        2.651,
+        15.0,
+        5.603
+      ],
+      "license": "NASA public domain; procedural material enhancements CC0"
+    },
+    "landsat": {
+      "objects": 1,
+      "faces": 85364,
+      "dimensions_metres": [
+        3.649,
+        9.0,
+        7.368
+      ],
+      "license": "NASA public domain; procedural material enhancements CC0"
+    },
+    "so50": {
+      "objects": 51,
+      "faces": 4974,
+      "dimensions_metres": [
+        0.863,
+        0.724,
+        0.421
+      ],
+      "license": "CC0-1.0"
+    },
+    "greencube": {
+      "objects": 39,
+      "faces": 3974,
+      "dimensions_metres": [
+        0.461,
+        0.323,
+        0.446
+      ],
+      "license": "CC0-1.0"
+    },
+    "diwata": {
+      "objects": 57,
+      "faces": 12745,
+      "dimensions_metres": [
+        2.57,
+        1.282,
+        0.873
+      ],
+      "license": "CC0-1.0"
+    }
+  },
+  "errors": []
+}

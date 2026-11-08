@@ -7,3 +7,9 @@ local.properties
 .DS_Store
 captures/
 .kotlin/
+
+# Reproducible Blender source downloads, intermediate renders and local Python.
+tools/blender/cache/
+tools/blender/.venv/
+tools/blender/__pycache__/
+tools/blender/**/*.blend1
