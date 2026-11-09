@@ -72,7 +72,7 @@ def pack_image(path, dest, size, rect, limit):
                 size,
                 (
                     Image.Resampling.BICUBIC
-                    if size == (420, 420)
+                    if size == (640, 640)
                     else Image.Resampling.LANCZOS
                 ),
             )
@@ -88,7 +88,7 @@ def pack_image(path, dest, size, rect, limit):
     dest.parent.mkdir(parents=True, exist_ok=True)
     temp = dest.with_suffix(".tmp.webp")
     encodings = [(86, 100), (82, 100), (78, 100), (74, 100), (70, 100)]
-    if size == (420, 420):
+    if size == (640, 640):
         # High-res ISS/Hubble silhouettes alone can exceed 20 KiB with lossless
         # alpha. Quantize coverage gradually before sacrificing surface detail.
         # RGB stays straight and filtering has already happened premultiplied.
@@ -107,7 +107,7 @@ def pack_image(path, dest, size, rect, limit):
         # libwebp's exhaustive lossless-alpha search at method 6 can take
         # seconds per candidate for fine spacecraft silhouettes. Method 4 has
         # the same lossless coverage and keeps budget fitting inexpensive.
-        method = 4 if size == (420, 420) and alpha_quality == 100 else 6
+        method = 4 if size == (640, 640) and alpha_quality == 100 else 6
         im.save(
             temp,
             "WEBP",
@@ -141,7 +141,7 @@ def pack_key(key, still=True, turn=True, hero=True):
         paths = [raw / f"turn_{i:02d}.png" for i in range(36)]
         rect = crop_rect(bounds(paths))
         qualities["turntable"] = [
-            pack_image(p, TURNS / f"{key}_{i:02d}.webp", (420, 420), rect, 20 * 1024)
+            pack_image(p, TURNS / f"{key}_{i:02d}.webp", (640, 640), rect, 44 * 1024)
             for i, p in enumerate(paths)
         ]
         qualities["turntable_crop"] = rect
@@ -243,7 +243,7 @@ def validate():
     for key in KEYS:
         files = [(STILLS / f"sat_{key}.webp", (512, 512), 60 * 1024)]
         files += [
-            (TURNS / f"{key}_{i:02d}.webp", (420, 420), 20 * 1024) for i in range(36)
+            (TURNS / f"{key}_{i:02d}.webp", (640, 640), 44 * 1024) for i in range(36)
         ]
         count = 0
         maxbytes = 0

@@ -125,7 +125,7 @@ def studio(rebuild=False):
     world.use_nodes = True
     nt = world.node_tree
     bg = nt.nodes.get("Background")
-    bg.inputs["Strength"].default_value = 0.7
+    bg.inputs["Strength"].default_value = 0.42
     tc = nt.nodes.new("ShaderNodeTexCoord")
     sep = nt.nodes.new("ShaderNodeSeparateXYZ")
     nt.links.new(tc.outputs["Normal"], sep.inputs[0])
@@ -148,9 +148,9 @@ def studio(rebuild=False):
         e.color = col
     nt.links.new(remap.outputs[0], ramp.inputs[0])
     nt.links.new(ramp.outputs[0], bg.inputs["Color"])
-    lamp("SUN / 5800 K / 0.5 degree", "SUN", (7, -5, 9), 3.4, (1.0, 0.94, 0.85))
-    lamp("EARTH / blue lower fill", "AREA", (-3, -4, -5), 450, (0.069, 0.262, 1.0), 8)
-    lamp("LIMB / mint separation", "AREA", (-5, 4, 3), 650, (0.20, 0.70, 0.40), 5)
+    lamp("SUN / 5800 K / 0.5 degree", "SUN", (9, -4, 3.5), 5.2, (1.0, 0.93, 0.82))
+    lamp("EARTH / blue lower fill", "AREA", (-3, -4, -5), 170, (0.069, 0.262, 1.0), 8)
+    lamp("LIMB / mint separation", "AREA", (-7, 5, 2), 1100, (0.25, 0.80, 0.55), 4)
     cam = bpy.data.cameras.new("Portrait / 105 mm")
     cam.lens = 105
     cam.sensor_width = 36
@@ -375,8 +375,8 @@ def frame(root, col, angles, aspect=1):
                 p = o.matrix_world @ Vector(corner)
                 distance = max(
                     distance,
-                    abs(p.x) / (0.83 * tanx) - p.y,
-                    abs(p.z) / (0.83 * tany) - p.y,
+                    abs(p.x) / (0.94 * tanx) - p.y,
+                    abs(p.z) / (0.94 * tany) - p.y,
                 )
     cam.location = (0, -distance, 0)
     cam.data.clip_end = max(100, distance * 4)
@@ -471,7 +471,7 @@ def main():
             for i in range(36):
                 path = raw / f"turn_{i:02d}.png"
                 root.rotation_euler.z = math.radians(i * 10)
-                render_once(path, 840, 840)
+                render_once(path, 1280, 1280)
         if key == "meteor":
             root.rotation_euler.z = 0
             root.rotation_euler.y = math.radians(-35)

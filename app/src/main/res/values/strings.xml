@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Downlink</string>
+    <string name="widget_desc">Der nächste Überflug mit Satellit, Zeit und Höhe</string>
 </resources>

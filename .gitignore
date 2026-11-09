@@ -13,3 +13,4 @@ tools/blender/cache/
 tools/blender/.venv/
 tools/blender/__pycache__/
 tools/blender/**/*.blend1
+app/.cxx/

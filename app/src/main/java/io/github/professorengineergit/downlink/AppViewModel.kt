@@ -34,6 +34,7 @@ class AppViewModel(app: Application) : AndroidViewModel(app), SensorEventListene
     var heading by mutableFloatStateOf(0f)
     var refreshing by mutableStateOf(false)
     var computing by mutableStateOf(true)
+    var selected by mutableStateOf<Pass?>(null) // angetippte Bahn auf der Startseite
 
     private val sensors = app.getSystemService(Context.SENSOR_SERVICE) as SensorManager
 
@@ -57,6 +58,8 @@ class AppViewModel(app: Application) : AndroidViewModel(app), SensorEventListene
         }
     }
 
+    fun reschedule() = Reminders.schedule(getApplication(), passes, settings)
+
     fun enabledSats() = Catalog.filter { it.key in settings.enabled && tracker.available(it) }
 
     fun recompute() {
@@ -67,6 +70,10 @@ class AppViewModel(app: Application) : AndroidViewModel(app), SensorEventListene
             }
             tracks = emptyMap()
             computing = false
+            if (selected != null && passes.none { it.sat.key == selected!!.sat.key && it.aos == selected!!.aos }) selected = null
+            val app = getApplication<Application>()
+            Reminders.schedule(app, passes, settings)
+            WidgetData.publish(app, passes)
         }
     }
 
