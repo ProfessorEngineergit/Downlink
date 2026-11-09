@@ -41,6 +41,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.material.icons.automirrored.rounded.ArrowForward
+import androidx.compose.material.icons.rounded.NightsStay
 import androidx.compose.material.icons.rounded.Sensors
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
@@ -59,7 +60,7 @@ import io.github.professorengineergit.downlink.AppViewModel
 
 /* --- Optionen. Zwei Profile: Standard zeigt das Nötige, Nerd alles. --- */
 @Composable
-fun SettingsScreen(vm: AppViewModel, bottom: Dp, onLocate: () -> Unit, onNotify: () -> Unit, onIntro: () -> Unit, onGear: () -> Unit = {}, onReceiver: () -> Unit = {}) {
+fun SettingsScreen(vm: AppViewModel, bottom: Dp, onLocate: () -> Unit, onNotify: () -> Unit, onIntro: () -> Unit, onGear: () -> Unit = {}, onReceiver: () -> Unit = {}, onNight: () -> Unit = {}) {
     val s = vm.settings
     fun set(recompute: Boolean = false, block: () -> Unit) { block(); s.save(); if (recompute) vm.recompute() }
     val age = if (vm.tracker.tleAge > 0) ((System.currentTimeMillis() - vm.tracker.tleAge) / 86_400_000.0) else -1.0
@@ -166,6 +167,17 @@ fun SettingsScreen(vm: AppViewModel, bottom: Dp, onLocate: () -> Unit, onNotify:
                     Column(Modifier.weight(1f)) {
                         Text("Empfänger", style = MaterialTheme.typography.titleMedium, color = Ink.text)
                         Text("RTL-SDR-Stick koppeln, einmessen, hören und aufnehmen.", style = MaterialTheme.typography.bodySmall, color = Ink.dim)
+                    }
+                    Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = Ink.text)
+                }
+            }
+            Glass(Modifier.padding(horizontal = 16.dp).padding(bottom = 10.dp).fillMaxWidth(), radius = 24.dp, tint = Color(0x1FFFFFFF), onClick = onNight) {
+                Row(Modifier.padding(16.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Rounded.NightsStay, null, tint = Mint.primary, modifier = Modifier.size(28.dp))
+                    Spacer(Modifier.width(14.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text("Nachtmodus", style = MaterialTheme.typography.titleMedium, color = Ink.text)
+                        Text("Nimmt Überflüge die ganze Nacht von selbst auf, am Ladegerät.", style = MaterialTheme.typography.bodySmall, color = Ink.dim)
                     }
                     Icon(Icons.AutoMirrored.Rounded.ArrowForward, null, tint = Ink.text)
                 }

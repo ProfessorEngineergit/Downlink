@@ -101,6 +101,11 @@ object Receiver : SampleSink {
     private var lastSlow = 0L
     /** Rauschboden für die Zeichnung, ohne Compose-Zustand */
     @Volatile var liveNoise = -100f; private set
+    /** Spitzenwerte seit resetPeaks(): Kanalleistung und stärkster Punkt über dem Rauschen, dazu Anzahl der Bilder mit auffälliger Spitze (Pakete). */
+    @Volatile var peakBandSnr = -100f; private set
+    @Volatile var peakBinSnr = -100f; private set
+    @Volatile var hits = 0; private set
+    fun resetPeaks() { peakBandSnr = -100f; peakBinSnr = -100f; hits = 0 }
 
     private class Capture(val n: Int, val blocks: Int) {
         val f = Fft(n); val acc = DoubleArray(n); val re = FloatArray(n); val im = FloatArray(n); val db = FloatArray(n)
@@ -267,6 +272,11 @@ object Receiver : SampleSink {
             val clipF = clips / n.toFloat()
             val now = System.nanoTime()
             liveNoise = med
+            if (mode == Mode.Record || mode == Mode.Audio) {
+                peakBandSnr = max(peakBandSnr, band - med - 1.6f)
+                peakBinSnr = max(peakBinSnr, peak - med)
+                if (peak - med > 14f) hits++
+            }
             if (now - lastPost > 33_000_000L) {
                 lastPost = now
                 val slow = now - lastSlow > 250_000_000L

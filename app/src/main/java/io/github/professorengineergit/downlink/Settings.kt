@@ -26,6 +26,10 @@ class Settings(ctx: Context) {
     var sdrGain by mutableIntStateOf(p.getInt("sdrGain", -1)) // Zehntel dB, -1 = automatisch
     var sdrAntenna by mutableStateOf(p.getString("sdrAntenna", "mag") ?: "mag") // mag, vdipole, qfh
     var sdrCalibrated by mutableStateOf(p.getLong("sdrCal", 0L))
+    var nightSats by mutableStateOf(p.getStringSet("nightSats", null) ?: setOf("m23", "m24", "iss"))
+    var nightMinEl by mutableFloatStateOf(p.getFloat("nightMinEl", 20f))
+    var nightFreeAz by mutableIntStateOf(p.getInt("nightFreeAz", -1)) // Mitte der freien Himmelshälfte in Grad, -1 = rundum frei
+    var nightUntil by mutableIntStateOf(p.getInt("nightUntil", 7)) // Stunde, bis zu der aufgenommen wird, -1 = offen
     var trackMinutes by mutableIntStateOf(p.getInt("trackMinutes", 90))
     var showSun by mutableStateOf(p.getBoolean("showSun", true))
     var dopplerChart by mutableStateOf(p.getBoolean("doppler", true))
@@ -50,7 +54,7 @@ class Settings(ctx: Context) {
             .putBoolean("nerd", nerd).putString("gear", gear)
             .putFloat("minEl", minElevation).putInt("hours", hoursAhead).putBoolean("utc", utc)
             .putBoolean("compassSky", compassSky).putBoolean("footprints", footprints).putBoolean("nightLights", nightLights)
-            .putBoolean("atmosphere", atmosphere).putInt("trackMinutes", trackMinutes).putInt("sdrPpm", sdrPpm).putInt("sdrGain", sdrGain).putString("sdrAntenna", sdrAntenna).putLong("sdrCal", sdrCalibrated).putBoolean("showSun", showSun)
+            .putBoolean("atmosphere", atmosphere).putStringSet("nightSats", nightSats).putFloat("nightMinEl", nightMinEl).putInt("nightFreeAz", nightFreeAz).putInt("nightUntil", nightUntil).putInt("trackMinutes", trackMinutes).putInt("sdrPpm", sdrPpm).putInt("sdrGain", sdrGain).putString("sdrAntenna", sdrAntenna).putLong("sdrCal", sdrCalibrated).putBoolean("showSun", showSun)
             .putBoolean("doppler", dopplerChart).putBoolean("tuning", tuningTable).putBoolean("directional", directional)
             .putBoolean("haptics", haptics).putBoolean("remind", remind).putInt("remindMin", remindMinutes).putFloat("remindMinEl", remindMinEl)
             .putBoolean("useGps", useGps).putBoolean("introDone", introDone).putBoolean("askedLocation", askedLocation)

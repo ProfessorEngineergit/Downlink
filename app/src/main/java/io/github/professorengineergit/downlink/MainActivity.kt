@@ -73,6 +73,7 @@ private sealed interface Route {
     data class Obj(val info: SatInfo) : Route
     data object Ar : Route
     data object Gear : Route
+    data object Night : Route
     data class Rx(val p: Pass?) : Route
 }
 
@@ -118,6 +119,7 @@ private fun App(vm: AppViewModel) {
             AnimatedContent(top to tab, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "screen") { (r, t) ->
                 when (r) {
                     is Route.Rx -> io.github.professorengineergit.downlink.ui.ReceiverScreen(vm, r.p, bottom) { stack = stack.dropLast(1) }
+                    is Route.Night -> io.github.professorengineergit.downlink.ui.NightScreen(vm, bottom) { stack = stack.dropLast(1) }
                     is Route.Gear -> io.github.professorengineergit.downlink.ui.GearShopScreen(bottom) { stack = stack.dropLast(1) }
                     is Route.PassR -> PassScreen(vm, r.p, bottom, onReceive = { stack = stack + Route.Rx(r.p) }) { stack = stack.dropLast(1) }
                     is Route.Obj -> ObjectScreen(vm, r.info, bottom, onBack = { stack = stack.dropLast(1) }, onPass = { stack = stack + Route.PassR(it) })
@@ -125,7 +127,7 @@ private fun App(vm: AppViewModel) {
                         0 -> HomeScreen(vm, bottom, onOpen = { stack = stack + Route.PassR(it) }, onAr = openAr)
                         1 -> MapScreen(vm, bottom) { stack = stack + Route.Obj(it) }
                         2 -> ObjectsScreen(vm, bottom) { stack = stack + Route.Obj(it) }
-                        else -> SettingsScreen(vm, bottom, onLocate = locate, onNotify = notify, onIntro = { s.introDone = false; s.save() }, onGear = { stack = stack + Route.Gear }, onReceiver = { stack = stack + Route.Rx(null) })
+                        else -> SettingsScreen(vm, bottom, onLocate = locate, onNotify = notify, onIntro = { s.introDone = false; s.save() }, onGear = { stack = stack + Route.Gear }, onReceiver = { stack = stack + Route.Rx(null) }, onNight = { stack = stack + Route.Night })
                     }
                 }
             }

@@ -78,7 +78,7 @@ JNIEXPORT jint JNICALL FN(setPpm)(JNIEnv *env, jclass c, jlong p, jint ppm) {
 JNIEXPORT jint JNICALL FN(setBiasTee)(JNIEnv *env, jclass c, jlong p, jboolean on) { return rtlsdr_set_bias_tee(((handle_t *)(intptr_t)p)->dev, on ? 1 : 0); }
 JNIEXPORT jint JNICALL FN(setGain)(JNIEnv *env, jclass c, jlong p, jint tenthDb) {
     rtlsdr_dev_t *d = ((handle_t *)(intptr_t)p)->dev;
-    if (tenthDb < 0) { rtlsdr_set_agc_mode(d, 1); return rtlsdr_set_tuner_gain_mode(d, 0); }
+    if (tenthDb < 0) { rtlsdr_set_agc_mode(d, 0); return rtlsdr_set_tuner_gain_mode(d, 0); }
     rtlsdr_set_agc_mode(d, 0);
     rtlsdr_set_tuner_gain_mode(d, 1);
     return rtlsdr_set_tuner_gain(d, tenthDb);
