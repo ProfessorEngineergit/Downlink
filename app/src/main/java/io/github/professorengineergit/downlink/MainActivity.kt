@@ -114,7 +114,7 @@ private fun App(vm: AppViewModel) {
 
     val bottom = 96.dp
     Box(Modifier.fillMaxSize()) {
-        Box(Modifier.fillMaxSize().then(if (top is Route.Rx) Modifier else Modifier.hazeSource(haze))) {
+        Box(Modifier.fillMaxSize().hazeSource(haze)) {
             AnimatedContent(top to tab, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "screen") { (r, t) ->
                 when (r) {
                     is Route.Rx -> io.github.professorengineergit.downlink.ui.ReceiverScreen(vm, r.p, bottom) { stack = stack.dropLast(1) }
