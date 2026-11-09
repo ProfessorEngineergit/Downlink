@@ -1,0 +1,24 @@
+Wettersatelliten wie Meteor-M funken ihre Bilder offen zur Erde, die ISS sendet auf 145,8 MHz. Downlink sagt dir, wann sie über dir sind, und mit einem kleinen RTL-SDR-Stick am Handy empfängst du sie selbst. Ohne Internet, ohne Konto, ohne Werbung.
+
+<b>Nur mit dem Handy</b>
+<ul>
+<li>Überflüge von Meteor-M, ISS, Tiangong, Hubble und 14 weiteren Objekten, mit Bewertung „Wird es klappen?“</li>
+<li>Himmelskuppel mit Kompass, AR-Ansicht mit der Kamera, 3D-Globus mit Tag und Nacht</li>
+<li>Sichtbarkeit mit bloßem Auge, Erinnerungen vor guten Überflügen, Widget</li>
+</ul>
+
+<b>Mit SDR-Stick und Antenne</b>
+<ul>
+<li>Stick koppeln per USB, Spektrum und Wasserfall</li>
+<li>FM-Ton von der ISS und von Amateurfunksatelliten</li>
+<li>Doppler-Nachführung und automatischer Start beim Überflug</li>
+<li>Meteor-M LRPT: Aufnahme und eigener Decoder, das Farbbild landet in Fotos</li>
+<li>Einmessen: Frequenzfehler gegen einen UKW-Sender, beste Verstärkung, Störquellen</li>
+<li>Bauanleitung für Magnetfuß und V-Dipol, Einkaufshilfe für das Zubehör</li>
+</ul>
+
+Du brauchst dafür einen RTL-SDR-Stick (etwa RTL-SDR Blog V3 oder Nooelec NESDR SMArt), eine Antenne und einen OTG-Adapter, zusammen etwa 55 bis 60 Euro.
+
+Bahnen: SGP4 mit Bahndaten von CelesTrak. Empfänger: librtlsdr und libusb. Open Source unter GPL-3.0.
+
+Teile der App sind mit einem KI-Assistenten geschrieben. Jede Version wird von mir auf einem echten Handy getestet.

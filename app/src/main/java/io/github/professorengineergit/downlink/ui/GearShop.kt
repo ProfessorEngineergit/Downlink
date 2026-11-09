@@ -111,7 +111,7 @@ fun GearShopScreen(bottom: Dp, onBack: () -> Unit) {
             item {
                 Column(Modifier.padding(start = 8.dp, top = 4.dp)) {
                     Text("Empfang & Zubehör", style = MaterialTheme.typography.headlineMedium, color = Ink.text)
-                    Text("Wetterbilder von Meteor-M und die ISS mit Handy, SDR-Stick und SatDump. Stand 08.11.2026, Preise ohne Gewähr.", style = MaterialTheme.typography.bodySmall, color = Ink.dim)
+                    Text("Wetterbilder von Meteor-M und die ISS mit Handy und SDR-Stick. Stand 08.11.2026, Preise ohne Gewähr.", style = MaterialTheme.typography.bodySmall, color = Ink.dim)
                 }
             }
             item {

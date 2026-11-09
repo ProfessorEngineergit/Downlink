@@ -247,12 +247,8 @@ private fun ReceiveInfo(sat: SatInfo) {
     Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Text(sat.note, style = MaterialTheme.typography.bodyLarge, color = Ink.text)
         if (sat.receivable && sat.freqMHz < 200) {
-            Text("Steck einen RTL-SDR-Stick per USB-C ans Handy. Downlink startet den Treiber auf der richtigen Frequenz, ein Decoder wie SatDump setzt die Bilder zusammen.",
+            Text("Steck einen RTL-SDR-Stick per USB-C ans Handy und tippe oben auf „Mit dem Stick empfangen“. Downlink stellt die Frequenz ein, folgt dem Doppler und macht bei Meteor das Bild selbst.",
                 style = MaterialTheme.typography.bodySmall, color = Ink.dim)
-            FilledTonalButton(onClick = {
-                val hz = (sat.freqMHz * 1_000_000).toLong()
-                runCatching { ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("iqsrc://-a 127.0.0.1 -p 14423 -f $hz -s 1024000"))) }
-            }) { Icon(Icons.Rounded.Satellite, null); Spacer(Modifier.size(8.dp)); Text("SDR-Treiber starten") }
         }
     }
 }

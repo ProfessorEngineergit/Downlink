@@ -140,7 +140,9 @@ fun ReceiverScreen(vm: AppViewModel, pass: Pass?, bottom: Dp, onBack: () -> Unit
         while (true) {
             val now = System.currentTimeMillis()
             val f = pass.sat.freqMHz
-            vm.tracker.live(pass.sat, s.observer, now)?.let { lv -> if (f > 0) Receiver.updateDoppler((doppler(lv.rangeRate, f) * 1000).toFloat()) }
+            // Doppler nur für die Frequenz dieses Satelliten, nicht für andere Schnellwahlen
+            if (passHz != null && Receiver.targetHz == passHz) vm.tracker.live(pass.sat, s.observer, now)?.let { lv -> if (f > 0) Receiver.updateDoppler((doppler(lv.rangeRate, f) * 1000).toFloat()) }
+            else if (Receiver.dopplerHz != 0f) Receiver.updateDoppler(0f)
             if (link == Link.Ready && !started && now >= pass.aos - 45_000 && now < pass.los) {
                 started = true
                 passHz?.let { Receiver.tune(it) }
@@ -397,7 +399,7 @@ private fun Controls(haptics: Boolean, meteor: Boolean, onRecord: (String) -> Un
         Text("Nimmt auf: %.0f MB · %d:%02d min · %s".format(mb, (sec / 60).toInt(), (sec % 60).toInt(), Receiver.recordFile?.name ?: ""),
             fontFamily = Mono, fontSize = 11.sp, color = Coral, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
     } else if (meteor || Receiver.targetHz in 137_000_000..138_000_000) {
-        Text("Meteor-Bilder: Aufnehmen speichert das Basisband. Bis der Decoder in der App ist, öffnest du die Datei in SatDump (siehe unten).",
+        Text("Meteor-Bilder: Aufnehmen speichert das Signal. Beim Stoppen macht Downlink das Bild daraus und legt es in Fotos ab.",
             style = MaterialTheme.typography.bodySmall, color = Ink.dim, modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp))
     }
 }

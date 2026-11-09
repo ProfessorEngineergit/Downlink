@@ -103,6 +103,7 @@ JNIEXPORT jboolean JNICALL FN(start)(JNIEnv *env, jclass c, jlong p, jobject sin
     h->sink = (*env)->NewGlobalRef(env, sink);
     jclass k = (*env)->GetObjectClass(env, sink);
     h->onSamples = (*env)->GetMethodID(env, k, "onSamples", "([BI)V");
+    if ((*env)->ExceptionCheck(env) || !h->onSamples) { (*env)->ExceptionClear(env); return JNI_FALSE; }
     h->running = 1;
     if (pthread_create(&h->thread, NULL, reader, h) != 0) { h->running = 0; return JNI_FALSE; }
     return JNI_TRUE;

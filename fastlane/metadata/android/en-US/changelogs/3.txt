@@ -1,0 +1,1 @@
+New: receiver for RTL-SDR sticks with spectrum, waterfall, FM audio, Doppler tracking and calibration. Meteor-M pictures are recorded, decoded in the app and saved to your photos. New design, 3D models of all satellites, globe, AR view, reminders and widget.

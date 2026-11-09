@@ -26,7 +26,7 @@ fun interface DecodeProgress { fun onProgress(fraction: Float, frames: Long, pac
 
 object MeteorDecoder {
     init { System.loadLibrary("downlinksdr") }
-    @JvmStatic external fun decodeFile(path: String, rate: Double, progress: DecodeProgress?): Array<LrptChannel>
+    @JvmStatic external fun decodeFile(path: String, rate: Double, progress: DecodeProgress?): Array<LrptChannel>?
 }
 
 /* --- Meteor-Bilder: Aufnahme decodieren, als PNG in der App ablegen und das Farbbild in Fotos sichern. --- */
@@ -62,7 +62,7 @@ object MeteorImages {
                 val chans = MeteorDecoder.decodeFile(recording.absolutePath, rate.toDouble()) { f, fr, pk, s ->
                     main.post { progress = f; frames = fr; packets = pk; snr = s }
                 }
-                save(app, recording, chans.filter { it.rows >= 16 })
+                save(app, recording, chans.orEmpty().filter { it.rows >= 16 })
             }
             main.post {
                 decoding = false

@@ -1,0 +1,24 @@
+Weather satellites like Meteor-M broadcast their pictures openly to Earth, and the ISS transmits on 145.8 MHz. Downlink tells you when they pass over you, and with a small RTL-SDR stick on your phone you receive them yourself. No internet, no account, no ads.
+
+<b>With just your phone</b>
+<ul>
+<li>Passes of Meteor-M, ISS, Tiangong, Hubble and 14 more objects, rated "will it work?"</li>
+<li>Sky dome with compass, camera AR view, 3D globe with day and night</li>
+<li>Naked-eye visibility, reminders before good passes, home screen widget</li>
+</ul>
+
+<b>With an SDR stick and antenna</b>
+<ul>
+<li>Pair the stick over USB, live spectrum and waterfall</li>
+<li>FM audio from the ISS and amateur radio satellites</li>
+<li>Doppler tracking and automatic start at the pass</li>
+<li>Meteor-M LRPT: recording and a built-in decoder, the colour picture goes to your photos</li>
+<li>Calibration: frequency error against an FM station, best gain, interference check</li>
+<li>Build guide for magnetic base and V-dipole, shopping guide for the accessories</li>
+</ul>
+
+You need an RTL-SDR stick (for example RTL-SDR Blog V3 or Nooelec NESDR SMArt), an antenna and an OTG adapter, about 55 to 60 euros together.
+
+The app is in German for now. Orbits: SGP4 with CelesTrak elements. Receiver: librtlsdr and libusb. Open source under GPL-3.0.
+
+Parts of the app are written with an AI assistant. I test every version on a real phone.

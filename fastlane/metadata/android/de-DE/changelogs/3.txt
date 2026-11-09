@@ -1,0 +1,1 @@
+Neu: Empfänger für RTL-SDR-Sticks mit Spektrum, Wasserfall, FM-Ton, Doppler-Nachführung und Einmessen. Meteor-M-Bilder werden aufgenommen, in der App decodiert und in Fotos gesichert. Neues Design, 3D-Modelle aller Satelliten, Globus, AR-Ansicht, Erinnerungen und Widget.

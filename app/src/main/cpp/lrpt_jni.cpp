@@ -13,7 +13,10 @@ Java_io_github_professorengineergit_downlink_sdr_MeteorDecoder_decodeFile(JNIEnv
     if (!f) return env->NewObjectArray(0, chCls, nullptr);
     std::fseek(f, 0, SEEK_END); long size = std::ftell(f); std::fseek(f, 0, SEEK_SET);
     jmethodID onProgress = nullptr;
-    if (progress) onProgress = env->GetMethodID(env->GetObjectClass(progress), "onProgress", "(FJJF)V");
+    if (progress) {
+        onProgress = env->GetMethodID(env->GetObjectClass(progress), "onProgress", "(FJJF)V");
+        if (env->ExceptionCheck()) { env->ExceptionClear(); onProgress = nullptr; }
+    }
     lrpt::Decoder dec(rate);
     std::vector<int8_t> buf(1 << 18);
     size_t n; long done = 0; int tick = 0;
@@ -29,6 +32,7 @@ Java_io_github_professorengineergit_downlink_sdr_MeteorDecoder_decodeFile(JNIEnv
     std::fclose(f);
     auto& chs = dec.channels();
     jmethodID ctor = env->GetMethodID(chCls, "<init>", "(III[B)V");
+    if (env->ExceptionCheck() || !ctor) { env->ExceptionClear(); return nullptr; }
     jobjectArray out = env->NewObjectArray((jsize)chs.size(), chCls, nullptr);
     int i = 0;
     for (auto& [apid, c] : chs) {

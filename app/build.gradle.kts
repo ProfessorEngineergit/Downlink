@@ -1,7 +1,12 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.plugin.compose")
 }
+
+// Release key: path and passwords live in local.properties, which is never committed
+val props = Properties().apply { rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) } }
 
 android {
     namespace = "io.github.professorengineergit.downlink"
@@ -12,16 +17,31 @@ android {
         applicationId = "io.github.professorengineergit.downlink"
         minSdk = 29
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.2.0"
+        versionCode = 3
+        versionName = "0.3.0"
         ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a", "x86_64") }
+    }
+
+    signingConfigs {
+        create("release") {
+            props.getProperty("downlink.keystore")?.let { storeFile = file(it) }
+            storePassword = props.getProperty("downlink.keystore.password")
+            keyAlias = props.getProperty("downlink.key.alias")
+            keyPassword = props.getProperty("downlink.key.password")
+        }
     }
 
     buildTypes {
         release {
             isMinifyEnabled = true
+            if (props.getProperty("downlink.keystore") != null) signingConfig = signingConfigs.getByName("release")
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
         }
+    }
+    buildTypes.create("check") {
+        initWith(buildTypes.getByName("release"))
+        signingConfig = signingConfigs.getByName("debug")
+        matchingFallbacks += listOf("release")
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
