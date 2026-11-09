@@ -26,6 +26,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -64,6 +68,9 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -179,6 +186,8 @@ fun ReceiverScreen(vm: AppViewModel, pass: Pass?, bottom: Dp, onBack: () -> Unit
             SectionTitle("Antenne aufstellen")
             AntennaGuide(s.sdrAntenna, s.haptics) { s.sdrAntenna = it; s.save() }
             if (link == Link.Ready) AntennaMeter(s.haptics)
+            SectionTitle("Bilder")
+            Pictures()
             SectionTitle("Aufnahmen")
             Recordings()
         }
@@ -298,7 +307,6 @@ private fun PassBanner(p: Pass, utc: Boolean, meteor: Boolean) {
 
 @Composable
 private fun LiveCard() {
-    @Suppress("UNUSED_VARIABLE") val f = Receiver.frame
     val snr = (Receiver.bandDb - Receiver.noiseDb - 1.6f).coerceAtLeast(0f)
     Glass(Modifier.padding(horizontal = 16.dp, vertical = 6.dp).fillMaxWidth(), radius = 26.dp, tint = Color(0xCC07101C)) {
         Column(Modifier.padding(top = 16.dp)) {
@@ -321,33 +329,24 @@ private fun LiveCard() {
     }
 }
 
-private fun heat(db: Float, floor: Float): Color {
-    val x = ((db - floor + 6f) / 36f).coerceIn(0f, 1f)
-    return when {
-        x < 0.33f -> lerpC(Color(0xFF040A16), Color(0xFF0E4A6E), x / 0.33f)
-        x < 0.66f -> lerpC(Color(0xFF0E4A6E), Color(0xFF3FD6A4), (x - 0.33f) / 0.33f)
-        else -> lerpC(Color(0xFF3FD6A4), Color(0xFFFFF4C2), (x - 0.66f) / 0.34f)
-    }
-}
-private fun lerpC(a: Color, b: Color, t: Float) = Color(a.red + (b.red - a.red) * t, a.green + (b.green - a.green) * t, a.blue + (b.blue - a.blue) * t)
-
 @Composable
 private fun Spectrum(modifier: Modifier) {
-    @Suppress("UNUSED_VARIABLE") val f = Receiver.frame
     val text = rememberTextMeasurer()
     Canvas(modifier) {
+        @Suppress("UNUSED_VARIABLE") val f = Receiver.frame // nur neu zeichnen, nicht neu aufbauen
         val sp = Receiver.spectrum; val n = sp.size
-        val floor = Receiver.noiseDb
+        val floor = Receiver.liveNoise
         val lo = floor - 6f; val hi = floor + 40f
-        val path = Path(); val fill = Path()
+        // Linienzug statt Pfad: Pfade würde Android bei jedem Bild neu rastern
+        val pts = ArrayList<Offset>(n)
+        val fillCol = Mint.primary.copy(alpha = 0.16f)
         for (i in 0 until n) {
             val x = i / (n - 1f) * size.width
             val y = size.height * (1 - ((sp[i] - lo) / (hi - lo)).coerceIn(0f, 1f))
-            if (i == 0) { path.moveTo(x, y); fill.moveTo(x, size.height); fill.lineTo(x, y) } else { path.lineTo(x, y); fill.lineTo(x, y) }
+            pts += Offset(x, y)
+            if (i % 3 == 0) drawLine(fillCol, Offset(x, y), Offset(x, size.height), size.width / n * 3f)
         }
-        fill.lineTo(size.width, size.height); fill.close()
-        drawPath(fill, Brush.verticalGradient(listOf(Mint.primary.copy(alpha = 0.35f), Color.Transparent)))
-        drawPath(path, Mint.primary, style = Stroke(2f))
+        drawPoints(pts, androidx.compose.ui.graphics.PointMode.Polygon, Mint.primary, strokeWidth = 2f)
         // Zielmarke mit Kanalbreite
         val span = Receiver.rate.toFloat()
         val off = (Receiver.targetHz + Receiver.dopplerHz - Receiver.centerHz) / span
@@ -362,23 +361,16 @@ private fun Spectrum(modifier: Modifier) {
 
 @Composable
 private fun Waterfall(modifier: Modifier) {
-    @Suppress("UNUSED_VARIABLE") val f = Receiver.frame
+    val bmp = remember { android.graphics.Bitmap.createBitmap(Receiver.BINS, Receiver.ROWS, android.graphics.Bitmap.Config.ARGB_8888) }
+    val img = remember(bmp) { bmp.asImageBitmap() }
     Canvas(modifier) {
-        val rows = Receiver.waterfall; val top = Receiver.waterRow
-        val floor = Receiver.noiseDb
-        val n = rows[0].size
-        val rh = size.height / rows.size
-        val cw = size.width / n * 2
-        for (r in rows.indices) {
-            val row = rows[(top - r + rows.size) % rows.size]
-            val y = r * rh
-            var i = 0
-            while (i < n) {
-                val v = max(row[i], row[(i + 1).coerceAtMost(n - 1)])
-                drawRect(heat(v, floor), Offset(i / n.toFloat() * size.width, y), Size(cw + 0.5f, rh + 0.5f))
-                i += 2
-            }
-        }
+        @Suppress("UNUSED_VARIABLE") val f = Receiver.frame
+        bmp.setPixels(Receiver.waterColors, 0, Receiver.BINS, 0, 0, Receiver.BINS, Receiver.ROWS)
+        val top = Receiver.waterRow; val rows = Receiver.ROWS
+        val h1 = (rows - top) / rows.toFloat() * size.height
+        val w = size.width.toInt()
+        drawImage(img, IntOffset(0, top), IntSize(Receiver.BINS, rows - top), IntOffset.Zero, IntSize(w, h1.toInt().coerceAtLeast(1)), filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
+        if (top > 0) drawImage(img, IntOffset(0, 0), IntSize(Receiver.BINS, top), IntOffset(0, h1.toInt()), IntSize(w, (size.height - h1).toInt().coerceAtLeast(1)), filterQuality = androidx.compose.ui.graphics.FilterQuality.Low)
         val span = Receiver.rate.toFloat()
         val x = (0.5f + (Receiver.targetHz + Receiver.dopplerHz - Receiver.centerHz) / span) * size.width
         drawLine(Amber.copy(alpha = 0.6f), Offset(x, 0f), Offset(x, size.height), 1.5f, pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f)))
@@ -580,7 +572,6 @@ private fun AntennaMeter(haptics: Boolean) {
     val haptic = LocalHapticFeedback.current
     var base by remember { mutableStateOf<Float?>(null) }
     var best by remember { mutableFloatStateOf(-999f) }
-    @Suppress("UNUSED_VARIABLE") val fr = Receiver.frame
     val now = Receiver.bandDb - Receiver.noiseDb + (Receiver.levelDb - Receiver.noiseDb) * 0.5f
     val rel = base?.let { now - it } ?: 0f
     LaunchedEffect(rel.toInt()) { if (base != null && rel > best + 1f) { best = rel; if (haptics) haptic.performHapticFeedback(HapticFeedbackType.SegmentTick) } }
@@ -603,24 +594,106 @@ private fun AntennaMeter(haptics: Boolean) {
 private fun Recordings() {
     val ctx = LocalContext.current
     @Suppress("UNUSED_VARIABLE") val m = Receiver.mode
-    val files = remember(Receiver.mode) { File(ctx.getExternalFilesDir(null), "baseband").listFiles()?.sortedByDescending { it.lastModified() } ?: emptyList() }
+    val files = remember(Receiver.mode, io.github.professorengineergit.downlink.sdr.MeteorImages.version) { File(ctx.getExternalFilesDir(null), "baseband").listFiles()?.sortedByDescending { it.lastModified() } ?: emptyList() }
     Glass(Modifier.padding(horizontal = 16.dp).fillMaxWidth(), radius = 24.dp, tint = Color(0x1FFFFFFF)) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            if (files.isEmpty()) Text("Noch keine Aufnahmen. Bei einem Meteor-Überflug nimmt Downlink das Basisband von selbst auf.", style = MaterialTheme.typography.bodySmall, color = Ink.dim)
+            if (files.isEmpty()) Text("Noch keine Aufnahmen. Bei einem Meteor-Überflug nimmt Downlink das Signal von selbst auf.", style = MaterialTheme.typography.bodySmall, color = Ink.dim)
             files.take(8).forEach { f ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Column(Modifier.weight(1f)) {
                         Text(f.name, fontFamily = Mono, fontSize = 11.sp, color = Ink.text, maxLines = 2)
                         Text("%.0f MB".format(f.length() / 1e6), style = MaterialTheme.typography.labelSmall, color = Ink.dim)
                     }
+                    if (f.name.contains("Hz.s8")) Text("Bild", color = Mint.primary, fontWeight = FontWeight.SemiBold, modifier = Modifier.clip(CircleShape).clickable(enabled = !io.github.professorengineergit.downlink.sdr.MeteorImages.decoding) { io.github.professorengineergit.downlink.sdr.MeteorImages.decode(ctx, f) }.padding(horizontal = 10.dp, vertical = 8.dp))
                     Icon(Icons.Rounded.Share, "Teilen", tint = Mint.primary, modifier = Modifier.size(36.dp).clip(CircleShape).clickable {
                         val uri = FileProvider.getUriForFile(ctx, ctx.packageName + ".files", f)
                         ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("application/octet-stream").putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), "Aufnahme öffnen"))
                     }.padding(8.dp))
                 }
             }
-            Text("Bild daraus machen: In SatDump „Offline processing“, Pipeline „METEOR M2-x LRPT 72k“, Datei wählen, Format s8 (int8), Samplerate 192000.",
+            Text("Nach jedem Meteor-Überflug macht Downlink das Bild von selbst. „Bild“ decodiert eine Aufnahme nochmal. Die Rohdaten (s8, 192000 S/s) lassen sich auch in SatDump öffnen.",
                 style = MaterialTheme.typography.bodySmall, color = Ink.dim)
+        }
+    }
+}
+
+/* ---------- Bilder ---------- */
+
+@Composable
+private fun Pictures() {
+    val ctx = LocalContext.current
+    val mi = io.github.professorengineergit.downlink.sdr.MeteorImages
+    val pics = remember(mi.version) { mi.pictures(ctx) }
+    var open by remember { mutableStateOf<File?>(null) }
+    if (mi.decoding) {
+        val inf = rememberInfiniteTransition(label = "dec")
+        val t by inf.animateFloat(0f, 1f, infiniteRepeatable(tween(1400, easing = LinearEasing), RepeatMode.Restart), label = "t")
+        Glass(Modifier.padding(horizontal = 16.dp, vertical = 4.dp).fillMaxWidth(), radius = 22.dp, tint = Mint.primary.copy(alpha = 0.12f), outline = Ink.outlineOn) {
+            Column(Modifier.padding(16.dp)) {
+                Text("Das Bild entsteht", style = MaterialTheme.typography.titleSmall, color = Ink.text)
+                Text("%d Rahmen · %d Bildpakete · %.0f %%".format(mi.frames, mi.packets, mi.progress * 100), fontFamily = Mono, fontSize = 12.sp, color = Ink.dim)
+                Spacer(Modifier.height(10.dp))
+                // Zeilen, die sich wie bei einem Fax von oben nach unten aufbauen
+                Canvas(Modifier.fillMaxWidth().height(48.dp)) {
+                    val rows = 12
+                    for (r in 0 until rows) {
+                        val done = r < (mi.progress * rows).toInt()
+                        val shimmer = ((t * rows).toInt() == r)
+                        drawRect(if (done) Mint.primary.copy(alpha = 0.25f + 0.5f * (r % 3) / 2f) else if (shimmer) Mint.primary.copy(alpha = 0.18f) else Color.White.copy(alpha = 0.05f),
+                            Offset(0f, r * size.height / rows), Size(size.width, size.height / rows - 1f))
+                    }
+                }
+                LinearProgressIndicator(progress = { mi.progress }, modifier = Modifier.fillMaxWidth().padding(top = 8.dp), color = Mint.primary, trackColor = Ink.line)
+            }
+        }
+    }
+    mi.message?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Ink.text, modifier = Modifier.padding(horizontal = 24.dp, vertical = 6.dp)) }
+    if (pics.isEmpty() && !mi.decoding) {
+        Text("Hier erscheinen die Wetterbilder deiner Überflüge. Jedes Farbbild wird auch in Fotos gesichert.", style = MaterialTheme.typography.bodySmall, color = Ink.dim, modifier = Modifier.padding(horizontal = 24.dp))
+    }
+    Row(Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp, vertical = 6.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        pics.take(20).forEach { f ->
+            val thumb = remember(f) { android.graphics.BitmapFactory.decodeFile(f.absolutePath, android.graphics.BitmapFactory.Options().apply { inSampleSize = 8 })?.asImageBitmap() }
+            Glass(Modifier.size(150.dp, 190.dp), radius = 20.dp, tint = Color(0x1FFFFFFF), onClick = { open = f }) {
+                Column {
+                    if (thumb != null) androidx.compose.foundation.Image(thumb, null, Modifier.fillMaxWidth().height(140.dp), contentScale = androidx.compose.ui.layout.ContentScale.Crop)
+                    Text(f.nameWithoutExtension.substringAfter('_').replace('_', ' '), fontFamily = Mono, fontSize = 10.sp, color = Ink.dim, modifier = Modifier.padding(8.dp), maxLines = 2)
+                }
+            }
+        }
+    }
+    open?.let { f -> PictureViewer(f) { open = null } }
+}
+
+@Composable
+private fun PictureViewer(f: File, onClose: () -> Unit) {
+    val ctx = LocalContext.current
+    val mi = io.github.professorengineergit.downlink.sdr.MeteorImages
+    val files = remember(f) { listOf(f) + mi.channelsOf(f) }
+    var idx by remember { mutableStateOf(0) }
+    val img = remember(files[idx]) { android.graphics.BitmapFactory.decodeFile(files[idx].absolutePath)?.asImageBitmap() }
+    var scale by remember { mutableFloatStateOf(1f) }
+    var off by remember { mutableStateOf(Offset.Zero) }
+    androidx.compose.ui.window.Dialog(onDismissRequest = onClose, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) {
+        Box(Modifier.fillMaxSize().background(Color.Black)) {
+            if (img != null) androidx.compose.foundation.Image(img, null, Modifier.fillMaxSize()
+                .pointerInput(Unit) { detectTransformGestures { _, pan, zoom, _ -> scale = (scale * zoom).coerceIn(1f, 8f); off += pan } }
+                .graphicsLayer { scaleX = scale; scaleY = scale; translationX = off.x; translationY = off.y },
+                contentScale = androidx.compose.ui.layout.ContentScale.Fit)
+            Row(Modifier.align(Alignment.TopStart).statusBarsPadding().padding(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                RoundIcon(Icons.AutoMirrored.Rounded.ArrowBack, "Zurück", false, onClose)
+                Spacer(Modifier.weight(1f))
+                RoundIcon(Icons.Rounded.Share, "Teilen", false) {
+                    val src = files[idx]
+                    val uri = FileProvider.getUriForFile(ctx, ctx.packageName + ".files", src)
+                    ctx.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("image/png").putExtra(Intent.EXTRA_STREAM, uri).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION), "Bild teilen"))
+                }
+            }
+            if (files.size > 1) Row(Modifier.align(Alignment.BottomCenter).navigationBarsPadding().padding(16.dp).horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                files.forEachIndexed { i, ff ->
+                    Chip(if (i == 0) "Farbe" else "Kanal " + ff.nameWithoutExtension.substringAfterLast("_ch"), i == idx) { idx = i; scale = 1f; off = Offset.Zero }
+                }
+            }
         }
     }
 }

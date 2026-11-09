@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
-project(downlink_sdr C)
+project(downlink_sdr C CXX)
+set(CMAKE_CXX_STANDARD 17)
 
 # libusb (LGPL-2.1) for Android: devices are opened by the app and wrapped by file descriptor
 add_library(usb1 STATIC
@@ -16,5 +17,9 @@ target_compile_definitions(rtlsdr PRIVATE DETACH_KERNEL_DRIVER=1 rtlsdr_STATIC)
 target_compile_options(rtlsdr PRIVATE -w)
 target_link_libraries(rtlsdr usb1)
 
-add_library(downlinksdr SHARED rtl_jni.c)
-target_link_libraries(downlinksdr rtlsdr usb1 log)
+# Meteor-M LRPT decoder (own implementation)
+add_library(lrpt STATIC lrpt/lrpt.cpp)
+target_compile_options(lrpt PRIVATE -O3)
+
+add_library(downlinksdr SHARED rtl_jni.c lrpt_jni.cpp)
+target_link_libraries(downlinksdr rtlsdr usb1 lrpt log)

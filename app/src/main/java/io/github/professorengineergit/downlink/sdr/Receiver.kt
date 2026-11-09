@@ -69,10 +69,13 @@ object Receiver : SampleSink {
 
     /** Spektrum (dB) und Wasserfall-Ring, vom UI gelesen. */
     val spectrum = FloatArray(BINS) { -100f }
-    val waterfall = Array(220) { FloatArray(BINS) { -100f } }
+    const val ROWS = 220
+    /** Wasserfall als fertige Farben, ein Ring von Zeilen; die neueste liegt bei waterRow, ältere darunter. */
+    val waterColors = IntArray(BINS * ROWS) { 0xFF040A16.toInt() }
     @Volatile var waterRow = 0; private set
 
     private var handle = 0L
+    private var appCtx: Context? = null
     private var conn: UsbDeviceConnection? = null
     private val io = Executors.newSingleThreadExecutor()
     private val main = Handler(Looper.getMainLooper())
@@ -95,6 +98,9 @@ object Receiver : SampleSink {
     private var tick = 0
     private var capture: Capture? = null
     private var lastPost = 0L
+    private var lastSlow = 0L
+    /** Rauschboden für die Zeichnung, ohne Compose-Zustand */
+    @Volatile var liveNoise = -100f; private set
 
     private class Capture(val n: Int, val blocks: Int) {
         val f = Fft(n); val acc = DoubleArray(n); val re = FloatArray(n); val im = FloatArray(n); val db = FloatArray(n)
@@ -110,6 +116,7 @@ object Receiver : SampleSink {
     }
 
     fun connect(ctx: Context, savedPpm: Int, savedGain: Int) {
+        appCtx = ctx.applicationContext
         if (link == Link.Ready || link == Link.Connecting) return
         val um = ctx.getSystemService(Context.USB_SERVICE) as UsbManager
         val d = device(ctx) ?: run { link = Link.NoDevice; return }
@@ -211,7 +218,12 @@ object Receiver : SampleSink {
     private fun stopStream() {
         val h = handle
         if (h != 0L) io.submit { RtlNative.stop(h) }.get()
+        val wasRecording = out != null
         closeOutputs()
+        // Nach einer Meteor-Aufnahme gleich das Bild daraus machen
+        val f = recordFile
+        val c = appCtx
+        if (wasRecording && f != null && c != null && f.name.contains("Hz.s8") && targetHz in 137_000_000L..138_000_000L) MeteorImages.decode(c, f)
     }
 
     private fun closeOutputs() {
@@ -239,11 +251,13 @@ object Receiver : SampleSink {
             val w = fft.window
             for (i in 0 until 2048) { fRe[i] = bRe[i] * w[i]; fIm[i] = bIm[i] * w[i] }
             fft.powerDb(fRe, fIm, fDb)
-            val row = waterfall[(waterRow + 1) % waterfall.size]
-            for (k in 0 until BINS) { var m = -200f; for (j in 0 until 4) m = max(m, fDb[k * 4 + j]); row[k] = m; spectrum[k] = spectrum[k] * 0.6f + m * 0.4f }
-            waterRow = (waterRow + 1) % waterfall.size
+            for (k in 0 until BINS) { var m = -200f; for (j in 0 until 4) m = max(m, fDb[k * 4 + j]); spectrum[k] = spectrum[k] * 0.6f + m * 0.4f; rowTmp[k] = m }
             val sorted = fDb.copyOf().also { it.sort() }
             val med = sorted[1024]
+            val r = (waterRow - 1 + ROWS) % ROWS
+            val base = r * BINS
+            for (k in 0 until BINS) waterColors[base + k] = heat(rowTmp[k], med)
+            waterRow = r
             val binHz = rate / 2048f
             val center = 1024 + ((targetHz + dopplerHz - centerHz) / binHz).roundToInt()
             val half = (15_000 / binHz).roundToInt().coerceAtLeast(2)
@@ -252,9 +266,12 @@ object Receiver : SampleSink {
             val band = (10 * log10(sum / cnt.coerceAtLeast(1) + 1e-12)).toFloat()
             val clipF = clips / n.toFloat()
             val now = System.nanoTime()
-            if (now - lastPost > 50_000_000L) {
+            liveNoise = med
+            if (now - lastPost > 33_000_000L) {
                 lastPost = now
-                post { noiseDb = med; levelDb = peak; bandDb = band; clipping = clipF; frame++ }
+                val slow = now - lastSlow > 250_000_000L
+                if (slow) lastSlow = now
+                post { frame++; if (slow) { noiseDb = med; levelDb = peak; bandDb = band; clipping = clipF } }
             }
         }
 
@@ -286,6 +303,17 @@ object Receiver : SampleSink {
         }
     }
     private var pendingBytes = 0L
+    private val rowTmp = FloatArray(BINS)
+
+    // Farbskala des Wasserfalls: Nachtblau, Petrol, Mint, helles Gelb
+    private val stops = intArrayOf(0xFF040A16.toInt(), 0xFF0E4A6E.toInt(), 0xFF3FD6A4.toInt(), 0xFFFFF4C2.toInt())
+    private fun heat(db: Float, floor: Float): Int {
+        val x = ((db - floor + 6f) / 36f).coerceIn(0f, 0.999f) * 3f
+        val i = x.toInt(); val f = x - i
+        val a = stops[i]; val b = stops[i + 1]
+        fun ch(s: Int) = (((a shr s) and 0xff) + (((b shr s) and 0xff) - ((a shr s) and 0xff)) * f).toInt()
+        return (0xFF shl 24) or (ch(16) shl 16) or (ch(8) shl 8) or ch(0)
+    }
 
     private fun feedCapture(c: Capture, n: Int, clips: Int) {
         c.clips += clips; c.total += n
