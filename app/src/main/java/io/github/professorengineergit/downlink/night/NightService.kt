@@ -38,6 +38,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 import org.json.JSONArray
 import org.json.JSONObject
 import java.io.File
@@ -98,6 +99,7 @@ object Night {
 class NightService : Service() {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
     private var job: Job? = null
+    private val pending = java.util.concurrent.CopyOnWriteArrayList<Job>()
     private var wake: PowerManager.WakeLock? = null
 
     override fun onBind(i: Intent?): IBinder? = null
@@ -110,7 +112,12 @@ class NightService : Service() {
         if (!ok) { Night.status = "Android lässt den Dienst nicht starten. Stick anstecken und Zugriff erlauben."; stopSelf(); return START_NOT_STICKY }
         if (job == null) {
             wake = getSystemService(PowerManager::class.java).newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "downlink:night").apply { acquire(14 * 3600_000L) }
-            job = scope.launch { runCatching { night() }; shutdown() }
+            job = scope.launch {
+                runCatching { night() }
+                // Bilder zu Ende rechnen lassen, bevor der Dienst endet, damit das Ergebnis im Protokoll landet
+                if (isActive) { say("Fertig, rechne noch Bilder"); pending.forEach { j -> withTimeoutOrNull(25 * 60_000L) { j.join() } }; say("Fertig, Nachtmodus beendet") }
+                shutdown()
+            }
         }
         return START_STICKY
     }
@@ -261,7 +268,7 @@ class NightService : Service() {
         }
         Night.put(this, Night.Entry(id, p.sat.key, p.sat.label, p.aos, p.maxEl, result, snr, peak, hits, mb, note))
         // Bei Meteor das Ergebnis der Bildberechnung nachtragen
-        if (p.sat.key.startsWith("m2") && file != null) scope.launch {
+        if (p.sat.key.startsWith("m2") && file != null) pending += scope.launch {
             delay(1500)
             var w = 0
             while (MeteorImages.decoding && w++ < 600) delay(1000)
