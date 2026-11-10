@@ -76,7 +76,7 @@ Die alten NOAA-Satelliten 15, 18 und 19 wurden 2025 abgeschaltet und fehlen desh
 - **Globus:** OpenGL ES 3 auf einer TextureView, Erde mit Tag, Nacht und Atmosphäre.
 - **Empfänger:** [librtlsdr](https://gitea.osmocom.org/sdr/rtl-sdr) und [libusb](https://libusb.info), mit dem NDK gebaut. Android gibt den USB-Zugriff frei, die App öffnet den Stick über den Dateideskriptor. Signalverarbeitung (FFT, Mischer, Filter, FM) in Kotlin.
 - **Meteor-Decoder:** eigene C++-Implementierung der LRPT-Kette: Matched Filter, Costas-Loop mit FLL, Gardner-Taktrückgewinnung für OQPSK, Viterbi (k=7, r=1/2), CCSDS-Rahmen und Pakete, MSU-MR-Bilddecodierung. Reed-Solomon wird noch nicht zur Fehlerkorrektur genutzt. Der Testsignal-Generator in `tools/lrpt` baut ein Meteor-Signal mit Rauschen und Frequenzversatz nach; bei 1 bis 40 dB holt der Decoder 65 bis 100 % der Bildpakete zurück.
-- **3D-Modelle:** Blender Cycles, Pipeline und Modelle in `tools/blender`.
+- **3D-Modelle:** mit Blender Cycles gerendert.
 
 ## Bauen
 

@@ -14,3 +14,11 @@ tools/blender/.venv/
 tools/blender/__pycache__/
 tools/blender/**/*.blend1
 app/.cxx/
+
+# Blender pipeline lives outside the repo
+tools/blender/
+docs/BLENDER_BRIEF.md
+
+# iCloud duplicates
+* [0-9].*
+* [0-9]
